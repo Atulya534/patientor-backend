@@ -1,0 +1,38 @@
+import express from "express";
+import { z } from "zod";
+
+const router = express.Router();
+
+// Patient type schema using Zod
+const newPatientSchema = z.object({
+  name: z.string(),
+  dateOfBirth: z.string(),
+  ssn: z.string(),
+  gender: z.enum(["male", "female", "other"]),
+  occupation: z.string()
+});
+
+// In-memory array to store patients
+const patients: Array<z.infer<typeof newPatientSchema>> = [];
+
+// POST /api/patients endpoint
+router.post("/", (req, res) => {
+  try {
+    const validatedPatient = newPatientSchema.parse(req.body);
+    patients.push(validatedPatient);
+    res.status(201).json(validatedPatient);
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      res.status(400).json({ errors: e.errors });
+    } else {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+});
+
+// GET /api/patients endpoint
+router.get("/", (_req, res) => {
+  res.json(patients);
+});
+
+export { router as patientsRouter };
